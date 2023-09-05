@@ -11,7 +11,7 @@ namespace TypeLeague.Models
         }
 
         public DbSet<UserModel> Users { get; set; } = null!;
-
+        public DbSet<TypeLeague.Models.BetModel> BetModel { get; set; } = default!;
         public DbSet<TypeLeague.Models.MatchModel> MatchModel { get; set; } = default!;
     }
 }
