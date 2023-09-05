@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Reflection.Metadata;
+using TypeLeague.Models.UserModels;
 
 namespace TypeLeague.Models
 {
@@ -9,6 +11,16 @@ namespace TypeLeague.Models
         {
         }
 
-        public DbSet<UserModel> Users { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<User>()
+                .Property(x => x.Role)
+                .HasDefaultValue("user");
+            modelBuilder.Entity<User>()
+                .Property(x => x.Points)
+                .HasDefaultValue(0);
+        }
     }
 }

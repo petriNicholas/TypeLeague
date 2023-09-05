@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TypeLeague.Models;
+using TypeLeague.Models.UserModels;
+
 
 namespace TypeLeague.Controllers
 {
@@ -22,52 +24,62 @@ namespace TypeLeague.Controllers
 
         // GET: api/User
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserModel>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserGetDTO>>> GetUsers()
         {
-          if (_context.Users == null)
-          {
-              return NotFound();
-          }
-            return await _context.Users.ToListAsync();
+            return await _context.Users
+                .Select( x => userToGetDTO(x))
+                .ToListAsync();
         }
+
 
         // GET: api/User/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserModel>> GetUserModel(int id)
+        public async Task<ActionResult<UserGetDTO>> GetUser(int id)
         {
           if (_context.Users == null)
           {
               return NotFound();
           }
-            var userModel = await _context.Users.FindAsync(id);
+            var user = await _context.Users.FindAsync(id);
 
-            if (userModel == null)
+            if (user == null)
             {
                 return NotFound();
             }
 
-            return userModel;
+            return userToGetDTO(user);
         }
 
         // PUT: api/User/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUserModel(int id, UserModel userModel)
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchUser(int id, UserPatchDTO userPutDTO)
         {
-            if (id != userModel.Id)
+
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(userModel).State = EntityState.Modified;
-
+            if (userPutDTO.Name!=null)
+            {
+                user.Name = userPutDTO.Name;
+            }
+            if (userPutDTO.Email!=null)
+            {
+                user.Email = userPutDTO.Email;
+            }
+            if (userPutDTO.Password != null)
+            {
+                user.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(userPutDTO.Password, 12);
+            }
             try
             {
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserModelExists(id))
+                if (!userExists(id))
                 {
                     return NotFound();
                 }
@@ -81,43 +93,63 @@ namespace TypeLeague.Controllers
         }
 
         // POST: api/User
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<UserModel>> PostUserModel(UserModel userModel)
+        public async Task<ActionResult<UserPostDTO>> PostUser(UserPostDTO userAddDTO)
         {
-          if (_context.Users == null)
-          {
-              return Problem("Entity set 'TypeLeagueContext.Users'  is null.");
-          }
-            _context.Users.Add(userModel);
+            var user = new User
+            {
+                Email = userAddDTO.Email,
+                Name = userAddDTO.Name,
+                Password = BCrypt.Net.BCrypt.EnhancedHashPassword(userAddDTO.Password, 12)
+            };
+            if (_context.Users == null)
+            {
+                return Problem("Entity set 'TypeLeagueContext.Users'  is null.");
+            }
+            _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetUserModel), new { id = userModel.Id }, userModel);
+            return CreatedAtAction(
+                nameof(GetUser),
+                new { id = user.Id },
+                userToGetDTO(user));
         }
 
         // DELETE: api/User/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUserModel(int id)
+        public async Task<IActionResult> DeleteUser(int id)
         {
             if (_context.Users == null)
             {
                 return NotFound();
             }
-            var userModel = await _context.Users.FindAsync(id);
-            if (userModel == null)
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
             {
                 return NotFound();
             }
 
-            _context.Users.Remove(userModel);
+            _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool UserModelExists(int id)
+        private bool userExists(int id)
         {
             return (_context.Users?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+
+        //Transforms the user resource into a format devoid of sensitive information,
+        //only containing fields that should be returned to a Get request.
+        private static UserGetDTO userToGetDTO(User user) =>
+            new UserGetDTO
+            {
+                Id = user.Id,
+                Email = user.Email,
+                Name = user.Name,
+                Points = user.Points
+            };
+
     }
 }
