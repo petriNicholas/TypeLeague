@@ -5,7 +5,7 @@ namespace TypeLeague.Models.UserModels
 {
     public class User
     {
-        public int Id { get; set; }
+        public int UserId { get; set; }
         public string? Role { get; set; }
 
         public string Email { get; set; } = null!;
@@ -17,6 +17,6 @@ namespace TypeLeague.Models.UserModels
         public int Points { get; set; }
 
         //navigation property specifies that one user can have many bets
-        //public ICollection<Bet> Bets { get; set; } = null!;
+        public ICollection<BetModel> Bets { get; set; } = null!;
     }
 }

@@ -54,7 +54,7 @@ namespace TypeLeague.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutMatchModel(int id, MatchModel matchModel)
         {
-            if (id != matchModel.Id)
+            if (id != matchModel.MatchId)
             {
                 return BadRequest();
             }
@@ -92,7 +92,7 @@ namespace TypeLeague.Controllers
             _context.MatchModel.Add(matchModel);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetMatchModel", new { id = matchModel.Id }, matchModel);
+            return CreatedAtAction("GetMatchModel", new { id = matchModel.MatchId }, matchModel);
         }
 
         // DELETE: api/Match/5
@@ -117,7 +117,7 @@ namespace TypeLeague.Controllers
 
         private bool MatchModelExists(int id)
         {
-            return (_context.MatchModel?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.MatchModel?.Any(e => e.MatchId == id)).GetValueOrDefault();
         }
     }
 }

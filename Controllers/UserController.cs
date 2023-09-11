@@ -111,7 +111,7 @@ namespace TypeLeague.Controllers
 
             return CreatedAtAction(
                 nameof(GetUser),
-                new { id = user.Id },
+                new { id = user.UserId },
                 userToGetDTO(user));
         }
 
@@ -137,7 +137,7 @@ namespace TypeLeague.Controllers
 
         private bool userExists(int id)
         {
-            return (_context.Users?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Users?.Any(e => e.UserId == id)).GetValueOrDefault();
         }
 
         //Transforms the user resource into a format devoid of sensitive information,
@@ -145,7 +145,7 @@ namespace TypeLeague.Controllers
         private static UserGetDTO userToGetDTO(User user) =>
             new UserGetDTO
             {
-                Id = user.Id,
+                Id = user.UserId,
                 Email = user.Email,
                 Name = user.Name,
                 Points = user.Points
