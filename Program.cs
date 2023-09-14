@@ -7,6 +7,8 @@ using TypeLeague.Models.UserModels;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
+using TypeLeague.Properties;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +46,8 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"], //appsettings.json
+        ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSecret"])), //Development only key, right click project -> manage user secrets
         ClockSkew = TimeSpan.Zero // Optional, set to zero to account for clock differences
     };
@@ -51,8 +55,18 @@ builder.Services.AddAuthentication(options =>
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
+builder.Services.AddSwaggerGen(c => {
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+    {
+        Description = "JWT Authorization header using the Bearer scheme.",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        Name = "Authorization",
+        BearerFormat = "JWT",
+    
+    });
+    c.OperationFilter<SecurityRequirementsOperationFilter>();
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -64,8 +78,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
 app.UseAuthentication();
+app.UseAuthorization();
+
 
 
 app.MapControllers();
