@@ -1,18 +1,12 @@
-﻿using System.ComponentModel;
+﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace TypeLeague.Models.UserModels
 {
-    public class User
+    public class TypeLeagueUser : IdentityUser
     {
-        public int Id { get; set; }
         public string? Role { get; set; }
-
-        public string Email { get; set; } = null!;
-
-        public string Name { get; set; } = null!;
-
-        public string Password { get; set; } = null!;
 
         public int Points { get; set; }
 

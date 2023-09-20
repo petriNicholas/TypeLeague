@@ -2,45 +2,49 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TypeLeague.Models;
 using TypeLeague.Models.UserModels;
 
 
+
 namespace TypeLeague.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/user")]
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly TypeLeagueContext _context;
+        private readonly UserManager<TypeLeagueUser> _userManager;
 
-        public UserController(TypeLeagueContext context)
+        public UserController(UserManager<TypeLeagueUser> userManager)
         {
-            _context = context;
+            _userManager = userManager;
         }
 
-        // GET: api/User
+        // GET: api/user
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<UserGetDTO>>> GetUsers()
         {
-            return await _context.Users
+            return await _userManager.Users
                 .Select( x => userToGetDTO(x))
                 .ToListAsync();
         }
 
 
-        // GET: api/User/5
+        // GET: api/user/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserGetDTO>> GetUser(int id)
+        public async Task<ActionResult<UserGetDTO>> GetUser(string id)
         {
-          if (_context.Users == null)
+          if (_userManager.Users == null)
           {
               return NotFound();
           }
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userManager.FindByIdAsync(id);
 
             if (user == null)
             {
@@ -50,106 +54,76 @@ namespace TypeLeague.Controllers
             return userToGetDTO(user);
         }
 
-        // PUT: api/User/5
-        [HttpPatch("{id}")]
-        public async Task<IActionResult> PatchUser(int id, UserPatchDTO userPutDTO)
+        //Change password
+        // POST: api/user/5/change_password
+        [HttpPost("{id}/change_password")]
+        public async Task<IActionResult> UpdatePassword(string id, UserUpdatePasswordDTO data)
         {
-
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
+            if (ModelState.IsValid)
             {
-                return NotFound();
-            }
-
-            if (userPutDTO.Name!=null)
-            {
-                user.Name = userPutDTO.Name;
-            }
-            if (userPutDTO.Email!=null)
-            {
-                user.Email = userPutDTO.Email;
-            }
-            if (userPutDTO.Password != null)
-            {
-                user.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(userPutDTO.Password, 12);
-            }
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!userExists(id))
+                var user = await _userManager.FindByIdAsync(id);
+                if (user == null)
                 {
                     return NotFound();
                 }
-                else
+                IdentityResult result = await _userManager.ChangePasswordAsync(user, data.Password, data.NewPassword);
+                if (result.Succeeded == false)
                 {
-                    throw;
+                    return BadRequest(result);
                 }
+                return Ok();
             }
-
-            return NoContent();
+            return BadRequest(ModelState);
         }
 
-        // POST: api/User
+        // POST: api/user
         [HttpPost]
-        public async Task<ActionResult<UserPostDTO>> PostUser(UserPostDTO userAddDTO)
+        public async Task<ActionResult<UserAddDTO>> PostUser(UserAddDTO userAddDTO)
         {
-            var user = new User
+            if (ModelState.IsValid)
             {
-                Email = userAddDTO.Email,
-                Name = userAddDTO.Name,
-                Password = BCrypt.Net.BCrypt.EnhancedHashPassword(userAddDTO.Password, 12)
-            };
-            if (_context.Users == null)
-            {
-                return Problem("Entity set 'TypeLeagueContext.Users'  is null.");
+                TypeLeagueUser user = new TypeLeagueUser
+                {
+                    Email = userAddDTO.Email,
+                    UserName = userAddDTO.UserName
+                };
+                IdentityResult result = await _userManager.CreateAsync(user, userAddDTO.Password);
+                if (result.Succeeded == false)
+                {
+                    return BadRequest(result);
+                }
+                return Ok();
             }
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(
-                nameof(GetUser),
-                new { id = user.Id },
-                userToGetDTO(user));
+            return BadRequest(ModelState);
         }
 
-        // DELETE: api/User/5
+        // DELETE: api/user/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser(string id)
         {
-            if (_context.Users == null)
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
             {
-                return NotFound();
-            }
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
+                await _userManager.DeleteAsync(user);
+                return NoContent();
             }
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            return NotFound();
 
-            return NoContent();
-        }
-
-        private bool userExists(int id)
-        {
-            return (_context.Users?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
         //Transforms the user resource into a format devoid of sensitive information,
         //only containing fields that should be returned to a Get request.
-        private static UserGetDTO userToGetDTO(User user) =>
-            new UserGetDTO
+        private static UserGetDTO userToGetDTO(TypeLeagueUser user)
+        {
+            return new UserGetDTO
             {
                 Id = user.Id,
                 Email = user.Email,
-                Name = user.Name,
+                UserName = user.UserName,
                 Points = user.Points
             };
-
+        }
     }
 }
