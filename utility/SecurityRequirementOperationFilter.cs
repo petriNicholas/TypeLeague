@@ -2,7 +2,7 @@
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace TypeLeague.Properties
+namespace TypeLeague.utility
 {
     // SecurityRequirementsOperationFilter.cs
     public class SecurityRequirementsOperationFilter : IOperationFilter

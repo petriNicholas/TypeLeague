@@ -28,7 +28,7 @@ namespace TypeLeague.Controllers
         
         [HttpPost]
         [AllowAnonymous]
-        public async Task<ActionResult<String>> PostUser(LoginPostDTO loginPostDTO)
+        public async Task<ActionResult<String>> LogInUser(LoginPostDTO loginPostDTO)
         {
             if (ModelState.IsValid)
             {
@@ -42,22 +42,24 @@ namespace TypeLeague.Controllers
                 {
                     return BadRequest("Incorrect email or password");
                 }
-                var token = CreateJWT(user.Id);
+                var roles = await _userManager.GetRolesAsync(user);
+                var token = CreateJWT(user.Id, roles);
                 string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
                 return Ok(new { token = tokenString });
             }
             return BadRequest(ModelState);
         }
 
-        private JwtSecurityToken CreateJWT(string userId)
+        private JwtSecurityToken CreateJWT(string userId, IList<string> roles)
         {
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSecret"]));
             var _credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
             var _claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, userId),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(JwtRegisteredClaimNames.Sub, userId), //Identifier for the token subject, in this case user ID.
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), //Unique identifier for token.
             };
+            _claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role))); //Adds a list of roles as claims.
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],

@@ -6,7 +6,6 @@ namespace TypeLeague.Models.UserModels
 {
     public class TypeLeagueUser : IdentityUser
     {
-        public string? Role { get; set; }
 
         public int Points { get; set; }
 

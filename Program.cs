@@ -8,7 +8,7 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
-using TypeLeague.Properties;
+using TypeLeague.utility;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,9 +18,11 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<TypeLeagueContext>(opt => 
     opt.UseInMemoryDatabase("TypeLeague"));
 builder.Services.AddIdentity<TypeLeagueUser, IdentityRole>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<TypeLeagueContext>();
 builder.Services.Configure<IdentityOptions>(options =>
 {
+    
     //Password settings
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
@@ -52,6 +54,10 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero // Optional, set to zero to account for clock differences
     };
 });
+builder.Services.AddAuthorization(options =>
+{
+    //options.AddPolicy("UsersOnly", policy => policy.RequireRole(U)
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -69,6 +75,12 @@ builder.Services.AddSwaggerGen(c => {
 });
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope()) //Create roles in the database.
+{
+    var _roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    SeedRoles.Initialize(_roleManager);
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -80,8 +92,6 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-
 
 app.MapControllers();
 
