@@ -9,8 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TypeLeague.Models;
 using TypeLeague.Models.UserModels;
-
-
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace TypeLeague.Controllers
 {
@@ -25,8 +25,8 @@ namespace TypeLeague.Controllers
             _userManager = userManager;
         }
 
-        // GET: api/user
-        [HttpGet]
+        // GET: api/user/all 
+        [HttpGet("all")]
         [Authorize]
         public async Task<ActionResult<IEnumerable<UserGetDTO>>> GetUsers()
         {
@@ -36,15 +36,18 @@ namespace TypeLeague.Controllers
         }
 
 
-        // GET: api/user/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<UserGetDTO>> GetUser(string id)
+        // GET: api/user
+        //Get data about the currently logged in user.
+        [HttpGet]
+        [Authorize(Roles = "user")]
+        public async Task<ActionResult<UserGetDTO>> GetUser()
         {
-          if (_userManager.Users == null)
-          {
-              return NotFound();
-          }
-            var user = await _userManager.FindByIdAsync(id);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value; //Gets the user ID from the JwtRegisteredClaimNames.Sub value in the JWT.
+            if (_userManager.Users == null)
+            {
+                return NotFound();
+            }
+            var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)
             {
@@ -54,9 +57,32 @@ namespace TypeLeague.Controllers
             return userToGetDTO(user);
         }
 
+        // POST: api/user
+        [HttpPost]
+        public async Task<ActionResult<UserAddDTO>> PostUser(UserAddDTO userAddDTO)
+        {
+            if (ModelState.IsValid)
+            {
+                TypeLeagueUser user = new TypeLeagueUser
+                {
+                    Email = userAddDTO.Email,
+                    UserName = userAddDTO.UserName
+                };
+                IdentityResult result = await _userManager.CreateAsync(user, userAddDTO.Password);
+                await _userManager.AddToRoleAsync(user,"user");
+                if (result.Succeeded == false)
+                {
+                    return BadRequest(result);
+                }
+                return Ok();
+            }
+            return BadRequest(ModelState);
+        }
+
         //Change password
         // POST: api/user/5/change_password
         [HttpPost("{id}/change_password")]
+        [Authorize(Roles = "user")]
         public async Task<IActionResult> UpdatePassword(string id, UserUpdatePasswordDTO data)
         {
             if (ModelState.IsValid)
@@ -76,26 +102,6 @@ namespace TypeLeague.Controllers
             return BadRequest(ModelState);
         }
 
-        // POST: api/user
-        [HttpPost]
-        public async Task<ActionResult<UserAddDTO>> PostUser(UserAddDTO userAddDTO)
-        {
-            if (ModelState.IsValid)
-            {
-                TypeLeagueUser user = new TypeLeagueUser
-                {
-                    Email = userAddDTO.Email,
-                    UserName = userAddDTO.UserName
-                };
-                IdentityResult result = await _userManager.CreateAsync(user, userAddDTO.Password);
-                if (result.Succeeded == false)
-                {
-                    return BadRequest(result);
-                }
-                return Ok();
-            }
-            return BadRequest(ModelState);
-        }
 
         // DELETE: api/user/5
         [HttpDelete("{id}")]
