@@ -5,7 +5,6 @@ namespace TypeLeague.Models
 {
     public class MatchModel
     {
-        [Key]
         public int MatchId { get; set; }
         public int HomeId { get; set; }
         public int AwayId { get; set; }
