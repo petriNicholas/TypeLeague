@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using NuGet.Packaging.Signing;
+using System.ComponentModel.DataAnnotations;
 
 namespace TypeLeague.Models.BetModels
 {
@@ -9,5 +10,6 @@ namespace TypeLeague.Models.BetModels
         public int HomeScore { get; set; }
         public int AwayScore { get; set; }
         public int UserId { get; set; }
+        public DateTime LastModified { get; set; } = DateTime.Now;
     }
 }
