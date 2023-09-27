@@ -27,9 +27,4 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Models\BetModels\" />
-    <Folder Include="Models\MatchModels\" />
-  </ItemGroup>
-
 </Project>

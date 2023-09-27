@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace TypeLeague.Models
+namespace TypeLeague.Models.BetModels
 {
     public class BetModel
     {
