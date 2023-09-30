@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using TypeLeague.Models;
+using TypeLeague.Models.BetModels;
+using TypeLeague.Models.MatchModels;
 using TypeLeague.Models.UserModels;
 
 namespace TypeLeague.Models
@@ -13,7 +14,7 @@ namespace TypeLeague.Models
         {
         }
 
-        public DbSet<TypeLeague.Models.BetModel> BetModel { get; set; } = default!;
-        public DbSet<TypeLeague.Models.MatchModel> MatchModel { get; set; } = default!;
+        public DbSet<BetModel> BetModel { get; set; } = default!;
+        public DbSet<MatchModel> MatchModel { get; set; } = default!;
     }
 }
