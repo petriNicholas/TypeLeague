@@ -10,6 +10,6 @@ namespace TypeLeague.Models.UserModels
         public int Points { get; set; }
 
         //navigation property specifies that one user can have many bets
-        //public ICollection<Bet> Bets { get; set; } = null!;
+        public virtual ICollection<BetModel> Bets { get; set; }
     }
 }
