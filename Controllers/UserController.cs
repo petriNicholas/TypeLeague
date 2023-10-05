@@ -81,6 +81,7 @@ namespace TypeLeague.Controllers
 
         //Change password
         // POST: api/user/5/change_password
+        // PUT requests should be idempotent, which this request is not, because it requires the old password which changes between requests.
         [HttpPost("{id}/change_password")]
         [Authorize(Roles = "user")]
         public async Task<IActionResult> UpdatePassword(string id, UserUpdatePasswordDTO data)

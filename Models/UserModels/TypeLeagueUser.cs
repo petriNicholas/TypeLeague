@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using TypeLeague.Models.BetModels;
 
 namespace TypeLeague.Models.UserModels
 {
